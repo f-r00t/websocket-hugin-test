@@ -1,21 +1,38 @@
-import SockJS from "sockjs-client";
-import Stomp from "stompjs";
+import {WebSocket} from "ws";
 
- var socket = new SockJS('https://techy.ddns.net/ws');
-    const stompClient = Stomp.over(socket);
-    stompClient.connect({}, function (frame) {
-        console.log(`Connected to  🤖`)
+const socket = new WebSocket('wss://techy.ddns.net/ws');
 
-        stompClient.subscribe('/topic/posts-encrypted', function (post) {
-            try {
-                let json = JSON.parse(post.body);
-		console.log(json);
-            } catch (err) {
-                console.log(err)
-            }
-        });
+export const startWebsocket = () => {
+    console.log(`Connecting..`)
+    // Open connection wit Cache
+    socket.addEventListener('open', function (event) {
+        console.log(`Connected 🤖`)
+
+        //Ping cache to keep Websocket alive
+        setInterval(() => {
+            socket.send(JSON.stringify("ping"))
+            console.log('ping')
+        }, 30000)
     });
 
-    socket.onclose = () => {
+    socket.addEventListener('close', () => {
         console.log('Connection closed')
-    }
+    })
+
+// Listen for messages
+    socket.addEventListener('message', function (event) {
+        let data = event.data
+
+        try {
+
+            let json = JSON.parse(data)
+            console.log(json);
+
+        } catch (err) {
+            console.log(err)
+        }
+
+    });
+}
+
+startWebsocket();
